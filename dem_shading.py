@@ -22,13 +22,13 @@
  ***************************************************************************/
 """
 
-__author__ = 'Zoran Čučković'
-__date__ = '2019-06-05'
-__copyright__ = '(C) 2019 by Zoran Čučković'
+__author__ = "Zoran Čučković"
+__date__ = "2019-06-05"
+__copyright__ = "(C) 2019 by Zoran Čučković"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 import os
 import sys
@@ -37,20 +37,16 @@ import inspect
 from qgis.core import QgsProcessingAlgorithm, QgsApplication
 from .dem_shading_provider import DemShadingProvider
 
-#cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
+# cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 #
-#if cmd_folder not in sys.path:
+# if cmd_folder not in sys.path:
 #    sys.path.insert(0, cmd_folder)
 
 
 class DemShadingPlugin:
-
     def __init__(self, iface):
-        
         self.iface = iface
         self.provider = None
-        
-       
 
     def initGui(self):
         self.provider = DemShadingProvider()

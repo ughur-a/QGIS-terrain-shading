@@ -4,259 +4,272 @@ Created on Tue Apr 21 12:07:10 2020
 
 @author: zcuckovi
 """
+
 import numpy as np
 
 from typing import List
 import math
 
 
-
-def view (offset_y, offset_x, shape, step=1, edge=0):
-    """            
+def view(offset_y, offset_x, shape, step=1, edge=0):
+    """
     Function returning two matching numpy views for moving window routines.
-    - offset_y and offset_x refer to the shift in relation to the analysed (central) cell 
+    - offset_y and offset_x refer to the shift in relation to the analysed (central) cell
     - size_y and size_x refer to the size of the data matrix (not of the window!)
     - view_in is the shifted view and view_out is the position of central cells
     """
     size_y, size_x = shape
 
-    size_y -= edge; size_x -= edge
-     
-    x = abs(offset_x) 
-    y = abs(offset_y) 
- 
-    x_in = slice(x + edge , size_x, step) 
+    size_y -= edge
+    size_x -= edge
+
+    x = abs(offset_x)
+    y = abs(offset_y)
+
+    x_in = slice(x + edge, size_x, step)
     x_out = slice(edge, size_x - x, step)
 
- 
     y_in = slice(y + edge, size_y, step)
     y_out = slice(edge, size_y - y, step)
- 
-    # the swapping trick    
-    if offset_x < 0: x_in, x_out = x_out, x_in                                 
-    if offset_y < 0: y_in, y_out = y_out, y_in
- 
+
+    # the swapping trick
+    if offset_x < 0:
+        x_in, x_out = x_out, x_in
+    if offset_y < 0:
+        y_in, y_out = y_out, y_in
+
     # return window view (in) and main view (out)
     return np.s_[y_in, x_in], np.s_[y_out, x_out]
 
 
-def window_loop (shape, chunk, 
-                 axis = 0, reverse = False, overlap = 0, offset = 0):
-            """
-            Construct a frame to extract chunks of data from gdal
-            (and to insert them properly to a numpy matrix)
-            """
-            xsize, ysize = shape if axis == 0 else shape[::-1]
-                        
-            if reverse : 
-                begin, step, stride = xsize, 1 + xsize // chunk, -1
-            else: 
-                begin, step, stride = 0, 0, 1
+def window_loop(shape, chunk, axis=0, reverse=False, overlap=0, offset=0):
+    """
+    Construct a frame to extract chunks of data from gdal
+    (and to insert them properly to a numpy matrix)
+    """
+    xsize, ysize = shape if axis == 0 else shape[::-1]
 
-            x, y, x_off, y_off = 0,0, xsize, ysize
-            
-            end = 1
-            
-            while xsize > end > 0 : 
-           
-                step += stride
+    if reverse:
+        begin, step, stride = xsize, 1 + xsize // chunk, -1
+    else:
+        begin, step, stride = 0, 0, 1
 
-                end = min(int(chunk * step), xsize)
-                
-                if reverse :  x, x_off = end, begin - end
-                else:         x, x_off = begin, end - begin
-                
-                # move window front or back, which means only one margin will overlap
-                if (offset < 0 and x >= abs(offset)) or (
-                    offset > 0 and x <= xsize-offset) : 
-                    x += offset * int(step)
-                
-                begin = end
-                
-               # ov = overlap * int(step)
-                ov = overlap
+    x, y, x_off, y_off = 0, 0, xsize, ysize
 
-                ov_left = min(ov, x) # do not spill over the border
-                ov_right = min (ov, (xsize - (x + x_off)))
+    end = 1
 
-                x_in = x - ov_left
-                #this is an offset from x_in !!, not coords
-                x_in_off = x_off + ov_right + ov_left
+    while xsize > end > 0:
+        step += stride
 
-               
-                if not axis : gdal_take =(x_in, y, x_in_off, y_off)
-                else: gdal_take = (y, x_in, y_off, x_in_off)
-              
-                    #AXIS SWAP : cannot be handled as transposition,
-                    # we need precise coords for GDAL
-                in_view = np.s_[:,: x_in_off] if not axis else np.s_[: x_in_off, :]
+        end = min(int(chunk * step), xsize)
 
-                x_out = x if ov_left == ov else 0
+        if reverse:
+            x, x_off = end, begin - end
+        else:
+            x, x_off = begin, end - begin
 
-                x_out_off = x_off + (ov_left if ov_left < ov else 0) + (ov_right if ov_right < ov else 0) 
+        # move window front or back, which means only one margin will overlap
+        if (offset < 0 and x >= abs(offset)) or (offset > 0 and x <= xsize - offset):
+            x += offset * int(step)
 
-                if not axis : gdal_put =(x_out, y, x_out_off, y_off)
-                else: gdal_put = (y, x_out, y_off, x_out_off)
-                
-                sx = slice(0 if ov_left < ov else ov , 
-                           x_out_off + ov_left + (ov_right if ov_right < ov else 0))
+        begin = end
 
-                out_view = np.s_[:, sx] if not axis else np.s_[sx , :]
-          
-                yield in_view, gdal_take, out_view, gdal_put
+        # ov = overlap * int(step)
+        ov = overlap
+
+        ov_left = min(ov, x)  # do not spill over the border
+        ov_right = min(ov, (xsize - (x + x_off)))
+
+        x_in = x - ov_left
+        # this is an offset from x_in !!, not coords
+        x_in_off = x_off + ov_right + ov_left
+
+        if not axis:
+            gdal_take = (x_in, y, x_in_off, y_off)
+        else:
+            gdal_take = (y, x_in, y_off, x_in_off)
+
+            # AXIS SWAP : cannot be handled as transposition,
+            # we need precise coords for GDAL
+        in_view = np.s_[:, :x_in_off] if not axis else np.s_[:x_in_off, :]
+
+        x_out = x if ov_left == ov else 0
+
+        x_out_off = (
+            x_off
+            + (ov_left if ov_left < ov else 0)
+            + (ov_right if ov_right < ov else 0)
+        )
+
+        if not axis:
+            gdal_put = (x_out, y, x_out_off, y_off)
+        else:
+            gdal_put = (y, x_out, y_off, x_out_off)
+
+        sx = slice(
+            0 if ov_left < ov else ov,
+            x_out_off + ov_left + (ov_right if ov_right < ov else 0),
+        )
+
+        out_view = np.s_[:, sx] if not axis else np.s_[sx, :]
+
+        yield in_view, gdal_take, out_view, gdal_put
 
 
 # ======= TODO : a class to handle filtering ==============
-#class Convolve:
+# class Convolve:
 #               - 3x3 filter
 #               - hillshade filters
 #               - tpi filters
 #               - ? occlusion directed filter
-                
-def filter3 (raster, mode='average'):
+
+
+def filter3(raster, mode="average"):
     """
     A pply a 3x3 filter.
     Modes : simple, average, laplacian
     """
-    average = mode == 'average'
-    laplace = mode == 'laplacian'
-    
+    average = mode == "average"
+    laplace = mode == "laplacian"
+
     temp_matrix = np.zeros(raster.shape)
-    
-    if average : 
+
+    if average:
         temp_count = np.zeros(raster.shape)
-        # set borders first  
-        temp_count[:]= 6
-        # main area : 9 points to test 
+        # set borders first
+        temp_count[:] = 6
+        # main area : 9 points to test
         temp_count[1:-1, 1:-1] = 9
         # corners
-        for v in [(0,0),(-1,-1),(0,-1), (-1,0)]: temp_count[v] = 4
-                          
-    
-    for i in range(-1,2):
-        for j in range(-1,2):
-            view_in, view_out = view(i , j ,raster.shape)
-            
-            z= raster[view_in]
-            if laplace and i==0 and j==0: 
+        for v in [(0, 0), (-1, -1), (0, -1), (-1, 0)]:
+            temp_count[v] = 4
+
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            view_in, view_out = view(i, j, raster.shape)
+
+            z = raster[view_in]
+            if laplace and i == 0 and j == 0:
                 z = z * -8  # this is a view, do not *=
-            temp_matrix[view_out] += z        
-                    
-    if average: temp_matrix /= temp_count
+            temp_matrix[view_out] += z
+
+    if average:
+        temp_matrix /= temp_count
     return temp_matrix
 
-def median_filter (raster, radius=2, shape = 'ortho', output_array = None):
-    """ Two neighbourhood shapes, orthogonal and star
+
+def median_filter(raster, radius=2, shape="ortho", output_array=None):
+    """Two neighbourhood shapes, orthogonal and star
     (star shape gives strange results, do not use it ! )
-    output array : raster shape + 3rd dim which is 
+    output array : raster shape + 3rd dim which is
     1 + radius * (4 if shape == 'ortho' else 8)
     """
     mx_z, mx_a = raster, output_array
-    
-    if not isinstance(mx_a, np.ndarray) :
-        # huge matrix, costly ! 
-        # determine the depth in 3d dimension (to store all pixels in the neighbourhood)
-        # position 0 = central cells 
-        dim3 = 1 + radius * (4 if shape == 'ortho' else 8)
-        mx_a = np.empty(raster.shape + (dim3,) )
-    
-    mx_a[:] = np.nan # clean up   
-    # fill with central cells' values 
-    mx_a[:,:, 0] = mx_z
-    
-    directions = [(0,1),  (1,0)] # orthogonal directions 
-    if shape == 'star': directions += [(1,1), (1, -1)]
 
-    for dx, dy in directions: 
-        for r in range (1, radius + 1):     
-            
-             # ! analyse only the supplied data : mx_z[mx_view_in]
+    if not isinstance(mx_a, np.ndarray):
+        # huge matrix, costly !
+        # determine the depth in 3d dimension (to store all pixels in the neighbourhood)
+        # position 0 = central cells
+        dim3 = 1 + radius * (4 if shape == "ortho" else 8)
+        mx_a = np.empty(raster.shape + (dim3,))
+
+    mx_a[:] = np.nan  # clean up
+    # fill with central cells' values
+    mx_a[:, :, 0] = mx_z
+
+    directions = [(0, 1), (1, 0)]  # orthogonal directions
+    if shape == "star":
+        directions += [(1, 1), (1, -1)]
+
+    for dx, dy in directions:
+        for r in range(1, radius + 1):
+            # ! analyse only the supplied data : mx_z[mx_view_in]
             view_in, view_out = view(r * dy, r * dx, mx_z.shape)
-             # this is for readability only
+            # this is for readability only
             view_out2, view_in2 = view_in, view_out
-            
-            # diagonal distance correction (costly...) 
-            if dx and dy : 
+
+            # diagonal distance correction (costly...)
+            if dx and dy:
                 diff = (mx_z[view_out] - mx_z[view_in]) * 0.7
                 z = mx_z[view_in] + diff
                 z2 = mx_z[view_in2] - diff
-            else:    
+            else:
                 z, z2 = mx_z[view_in], mx_z[view_in2]
-                        
-            pos = r  # find free slots in the 3rd dimension  (0 = central cell)       
-            if dy : 
-                pos += 2 * radius 
-                if dx : pos += 4 * radius # diagonal : dx and dy           
-  
-            mx_a[view_out][:,:, pos  ] =  z 
-            mx_a[view_out2][:,:, pos + radius ] =  z2 
-    
+
+            pos = r  # find free slots in the 3rd dimension  (0 = central cell)
+            if dy:
+                pos += 2 * radius
+                if dx:
+                    pos += 4 * radius  # diagonal : dx and dy
+
+            mx_a[view_out][:, :, pos] = z
+            mx_a[view_out2][:, :, pos + radius] = z2
+
     # let's try to avoid allocating new memory slots , to save some time...
-    np.nanmedian(mx_a, axis = 2, out = mx_a[:,:,0])
-    return mx_a[:,:,0]
-    
+    np.nanmedian(mx_a, axis=2, out=mx_a[:, :, 0])
+    return mx_a[:, :, 0]
+
+
 # Code from : https://github.com/fasiha/nextprod-py
 def nextpow(a: float, x: float) -> float:
-  """The smallest `a^n` not less than `x`, where `n` is a non-negative integer.
-  
-  `a` must be greater than 1, and `x` must be greater than 0.
-  # Examples
-  ```jldoctest
-  julia> nextpow(2, 7)
-  8
-  julia> nextpow(2, 9)
-  16
-  julia> nextpow(5, 20)
-  25
-  julia> nextpow(4, 16)
-  16
-  ```
-  """
-  assert x > 0 and a > 1
-  if x <= 1:
-    return 1.0
-  n = math.ceil(math.log(x, a))
-  p = a**(n - 1)
-  return p if p >= x else a**n
+    """The smallest `a^n` not less than `x`, where `n` is a non-negative integer.
+
+    `a` must be greater than 1, and `x` must be greater than 0.
+    # Examples
+    ```jldoctest
+    julia> nextpow(2, 7)
+    8
+    julia> nextpow(2, 9)
+    16
+    julia> nextpow(5, 20)
+    25
+    julia> nextpow(4, 16)
+    16
+    ```
+    """
+    assert x > 0 and a > 1
+    if x <= 1:
+        return 1.0
+    n = math.ceil(math.log(x, a))
+    p = a ** (n - 1)
+    return p if p >= x else a**n
 
 
 # Code from : https://github.com/fasiha/nextprod-py
 def nextprod(a: List[int], x: int) -> int:
-  """Next integer greater than or equal to `x` that can be written as ``\\prod k_i^{a_i}`` for integers
-  ``a_1``, ``a_2``, etc.
-  # Examples
-  ```jldoctest
-  julia> nextprod([2, 3], 105)
-  108
-  julia> 2^2 * 3^3
-  108
-  ```
-  """
-  k = len(a)
-  v = [1] * k  # current value of each counter
-  mx = [nextpow(ai, x) for ai in a]  # maximum value of each counter
-  v[0] = mx[0]  # start at first case that is >= x
-  p = mx[0]  # initial value of product in this case
-  best = p
-  icarry = 1
+    """Next integer greater than or equal to `x` that can be written as ``\\prod k_i^{a_i}`` for integers
+    ``a_1``, ``a_2``, etc.
+    # Examples
+    ```jldoctest
+    julia> nextprod([2, 3], 105)
+    108
+    julia> 2^2 * 3^3
+    108
+    ```
+    """
+    k = len(a)
+    v = [1] * k  # current value of each counter
+    mx = [nextpow(ai, x) for ai in a]  # maximum value of each counter
+    v[0] = mx[0]  # start at first case that is >= x
+    p = mx[0]  # initial value of product in this case
+    best = p
+    icarry = 1
 
-  while v[-1] < mx[-1]:
-    if p >= x:
-      best = p if p < best else best  # keep the best found yet
-      carrytest = True
-      while carrytest:
-        p = p // v[icarry - 1]
-        v[icarry - 1] = 1
-        icarry += 1
-        p *= a[icarry - 1]
-        v[icarry - 1] *= a[icarry - 1]
-        carrytest = v[icarry - 1] > mx[icarry - 1] and icarry < k
-      if p < x:
-        icarry = 1
-    else:
-      while p < x:
-        p *= a[0]
-        v[0] *= a[0]
-  return int(mx[-1] if mx[-1] < best else best)
-
-
+    while v[-1] < mx[-1]:
+        if p >= x:
+            best = p if p < best else best  # keep the best found yet
+            carrytest = True
+            while carrytest:
+                p = p // v[icarry - 1]
+                v[icarry - 1] = 1
+                icarry += 1
+                p *= a[icarry - 1]
+                v[icarry - 1] *= a[icarry - 1]
+                carrytest = v[icarry - 1] > mx[icarry - 1] and icarry < k
+            if p < x:
+                icarry = 1
+        else:
+            while p < x:
+                p *= a[0]
+                v[0] *= a[0]
+    return int(mx[-1] if mx[-1] < best else best)

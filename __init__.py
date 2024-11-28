@@ -22,9 +22,9 @@
  This script initializes the plugin, making it known to QGIS.
 """
 
-__author__ = 'Zoran Čučković'
-__date__ = '2019-06-05'
-__copyright__ = '(C) 2019 by Zoran Čučković'
+__author__ = "Zoran Čučković"
+__date__ = "2019-06-05"
+__copyright__ = "(C) 2019 by Zoran Čučković"
 
 
 # noinspection PyPep8Naming
@@ -36,4 +36,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     """
     #
     from .dem_shading import DemShadingPlugin
+
     return DemShadingPlugin(iface)

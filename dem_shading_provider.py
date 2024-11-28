@@ -22,13 +22,13 @@
  ***************************************************************************/
 """
 
-__author__ = 'Zoran Čučković'
-__date__ = '2019-06-05'
-__copyright__ = '(C) 2019 by Zoran Čučković'
+__author__ = "Zoran Čučković"
+__date__ = "2019-06-05"
+__copyright__ = "(C) 2019 by Zoran Čučković"
 
 # This will get replaced with a git SHA1 when you do a git archive
 
-__revision__ = '$Format:%H$'
+__revision__ = "$Format:%H$"
 
 from qgis.core import QgsProcessingProvider
 from processing.core.ProcessingConfig import Setting, ProcessingConfig
@@ -44,30 +44,31 @@ from .texture_algorithm import TextureAlgorithm
 
 
 class DemShadingProvider(QgsProcessingProvider):
-
     def __init__(self):
-        
-        super().__init__() # should resolve "key error" on unload
-        #QgsProcessingProvider.__init__(self)
-
+        super().__init__()  # should resolve "key error" on unload
+        # QgsProcessingProvider.__init__(self)
 
     def load(self):
-
         ProcessingConfig.settingIcons[self.name()] = self.icon()
-	# Activate provider by default
+        # Activate provider by default
         ProcessingConfig.addSetting(
-            Setting(self.name(), 'TERRAIN_SHADING_ACTIVATED',
-                                   'Activate', True))
+            Setting(self.name(), "TERRAIN_SHADING_ACTIVATED", "Activate", True)
+        )
         ProcessingConfig.addSetting(
-            Setting(self.name(), 'DATA_CHUNK',
-                                    'Data chunk size (megapixels)', 5))
+            Setting(self.name(), "DATA_CHUNK", "Data chunk size (megapixels)", 5)
+        )
         ProcessingConfig.addSetting(
-            Setting(self.name(), 'CONVERT_INT',
-                    'Convert results to integer values (saves space)', False))
+            Setting(
+                self.name(),
+                "CONVERT_INT",
+                "Convert results to integer values (saves space)",
+                False,
+            )
+        )
         ProcessingConfig.addSetting(
-            Setting(self.name(), 'BUFFER_SIZE',
-                                    'Total buffer size (megapixels)', 500))
-									
+            Setting(self.name(), "BUFFER_SIZE", "Total buffer size (megapixels)", 500)
+        )
+
         ProcessingConfig.readSettings()
         self.refreshAlgorithms()
         return True
@@ -77,25 +78,30 @@ class DemShadingProvider(QgsProcessingProvider):
         Unloads the provider. Any tear-down steps required by the provider
         should be implemented here.
         """
-        ProcessingConfig.removeSetting('TERRAIN_SHADING_ACTIVATED')
-        #ProcessingConfig.removeSetting('DATA_CHUNK')
+        ProcessingConfig.removeSetting("TERRAIN_SHADING_ACTIVATED")
+        # ProcessingConfig.removeSetting('DATA_CHUNK')
 
     def loadAlgorithms(self):
         """
         Loads all algorithms belonging to this provider.
         """
-        
-                # Load algorithms
-        alglist =[DemShadingAlgorithm(),  HillshadeAlgorithm(),
-                  OcclusionAlgorithm(),  TpiAlgorithm(),
-	               TextureAlgorithm()]
-        
+
+        # Load algorithms
+        alglist = [
+            DemShadingAlgorithm(),
+            HillshadeAlgorithm(),
+            OcclusionAlgorithm(),
+            TpiAlgorithm(),
+            TextureAlgorithm(),
+        ]
+
         if self.isActive():
-            for alg in alglist: self.addAlgorithm( alg )
+            for alg in alglist:
+                self.addAlgorithm(alg)
 
     def isActive(self):
         """Return True if the provider is activated and ready to run algorithms"""
-        return ProcessingConfig.getSetting('TERRAIN_SHADING_ACTIVATED')
+        return ProcessingConfig.getSetting("TERRAIN_SHADING_ACTIVATED")
 
     def id(self):
         """
@@ -103,7 +109,7 @@ class DemShadingProvider(QgsProcessingProvider):
         string should be a unique, short, character only string, eg "qgis" or
         "gdal". This string should not be localised.
         """
-        return 'terrain_shading'
+        return "terrain_shading"
 
     def name(self):
         """
@@ -112,7 +118,7 @@ class DemShadingProvider(QgsProcessingProvider):
 
         This string should be short (e.g. "Lastools") and localised.
         """
-        return self.tr('Terrain shading')
+        return self.tr("Terrain shading")
 
     def longName(self):
         """
@@ -122,10 +128,10 @@ class DemShadingProvider(QgsProcessingProvider):
         implementation returns the same string as name().
         """
         return self.name()
-    
+
     def icon(self):
         """
-		We return the default icon.
-		QgsProcessingProvider.icon(self)
+        We return the default icon.
+        QgsProcessingProvider.icon(self)
         """
-        return QIcon(path.dirname(__file__) + '/icon.png')
+        return QIcon(path.dirname(__file__) + "/icon.png")
