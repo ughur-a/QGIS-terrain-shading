@@ -27,23 +27,20 @@ __author__ = "Zoran Čučković"
 __date__ = "2019-06-05"
 __copyright__ = "(C) 2019 by Zoran Čučković"
 
-from os import sys, path
+from os import path
 
 from PyQt5.QtCore import QCoreApplication
 from qgis.core import (
-    QgsProcessing,
-    QgsProcessingException,
     QgsProcessingAlgorithm,
     QgsProcessingMultiStepFeedback,
     QgsProcessingParameterRasterLayer,
     QgsProcessingParameterRasterDestination,
     QgsProcessingParameterBoolean,
     QgsProcessingParameterNumber,
-    QgsProcessingParameterEnum,
+    # QgsProcessingParameterEnum,
     QgsProcessingUtils,
     QgsRasterBandStats,
 )
-from processing.core.ProcessingConfig import ProcessingConfig
 
 try:
     from osgeo import gdal

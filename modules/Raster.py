@@ -19,7 +19,6 @@ email : /
 ***************************************************************************/
 """
 
-from qgis.core import *
 from processing.core.ProcessingConfig import ProcessingConfig
 
 try:
