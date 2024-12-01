@@ -34,6 +34,7 @@ from qgis.core import (
     QgsProcessing,
     QgsProcessingException,
     QgsProcessingAlgorithm,
+    QgsProcessingMultiStepFeedback,
     QgsProcessingParameterRasterLayer,
     QgsProcessingParameterRasterDestination,
     QgsProcessingParameterBoolean,
@@ -126,6 +127,7 @@ class DemShadingAlgorithm(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        feedback = QgsProcessingMultiStepFeedback(4, feedback)
 
         # 1) -------------- INPUT -----------------
         elevation_model = self.parameterAsRasterLayer(parameters, self.INPUT, context)
@@ -147,6 +149,10 @@ class DemShadingAlgorithm(QgsProcessingAlgorithm):
 
         dem.set_output(self.output_model)
         # data_format = None : fallback to the general setting
+
+        feedback.setCurrentStep(1)
+        if feedback.isCanceled():
+            return {}
 
         # 2)   --------------- ORIENTATION AND DIMENSIONS -----------------
 
@@ -194,6 +200,10 @@ class DemShadingAlgorithm(QgsProcessingAlgorithm):
         chunk -= np.argmin(np.round(abs(c), decimals=2)[::-1]) + 1
 
         # writing output beforehand, to prepare for data dumps
+
+        feedback.setCurrentStep(2)
+        if feedback.isCanceled():
+            return {}
 
         # 3) -------   SHEAR MATRIX (INDICES) -------------
 
@@ -251,6 +261,10 @@ class DemShadingAlgorithm(QgsProcessingAlgorithm):
             f = np.s_[:xsize, 0]
 
         last_line = np.zeros((ysize if steep else xsize))
+
+        feedback.setCurrentStep(3)
+        if feedback.isCanceled():
+            return {}
 
         # 4 -----   LOOP THOUGH DATA CHUNKS AND CALCULATE -----------------
         counter = 0
