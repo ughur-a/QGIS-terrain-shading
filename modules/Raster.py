@@ -62,7 +62,7 @@ class Raster:
 
         gdal_raster = gdal.Open(qgis_raster_object.source())
 
-        if gdal_raster == None:
+        if gdal_raster is None:
             raise Exception("*** Elevation model cannot be opened ! ***")
 
         self.rst = gdal_raster  # for speed, keep open raster ?
@@ -142,7 +142,7 @@ class Raster:
     def take(self, gdal_take, matrix_in, fill_nodata=None, data_type=float):
         self.rst.ReadAsArray(*gdal_take, matrix_in).astype(data_type)
 
-        if not fill_nodata is None:
+        if fill_nodata is not None:
             matrix_in[matrix_in == self.nodata] = fill_nodata
 
             # DANGER : handling the common problem of implicit nodata (not registered)
