@@ -90,11 +90,10 @@ class TextureAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.ALPHA,
                 self.tr("Alpha (shrapness, 0 - 1.0)"),
-                QgsProcessingParameterNumber.Type.Double,
-                0.5,
-                False,
-                0,
-                1.0,
+                QgsProcessingParameterNumber.Integer,
+                defaultValue=0.5,
+                minValue=0,
+                maxValue=1,
             )
         )
 

@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+# ============== TODO : NO DATA handling ============================
+# - big ugly borders around no data : remove
+
+# TODO : relative slope / relmative hillshade ==> in a radius
 """
 
 /***************************************************************************
@@ -110,11 +114,8 @@ class TpiAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.RADIUS,
                 self.tr("Radius in pixels"),
-                QgsProcessingParameterNumber.Type.Integer,
-                5,
-                False,
-                0,
-                100,
+                QgsProcessingParameterNumber.Integer,
+                defaultValue=5,
             )
         )
 
@@ -122,11 +123,8 @@ class TpiAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.OFFSET_DISTANCE,
                 self.tr("Center of mass: offset in pixels (< radius)"),
-                QgsProcessingParameterNumber.Type.Integer,
-                0,
-                False,
-                0,
-                1000,
+                QgsProcessingParameterNumber.Integer,
+                defaultValue=0,
             )
         )
 
@@ -134,11 +132,10 @@ class TpiAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.OFFSET_AZIMUTH,
                 self.tr("Center of mass: azimuth"),
-                QgsProcessingParameterNumber.Type.Integer,
-                315,
-                False,
-                0,
-                360,
+                QgsProcessingParameterNumber.Integer,
+                defaultValue=315,
+                minValue=0,
+                maxValue=360,
             )
         )
 
@@ -200,6 +197,9 @@ class TpiAlgorithm(QgsProcessingAlgorithm):
         err, fatal = dem.verify_raster()
         if err:
             feedback.reportError(err, fatalError=fatal)
+
+            # ♦ !!!! TODO NODATA !!!!!
+            # nodata = dem.GetRasterBand(1).GetNoDataValue()
 
         dem.set_output(self.output_model)
 

@@ -103,11 +103,10 @@ class HillshadeAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.DIRECTION,
                 self.tr("Direction (0 to 360°)"),
-                QgsProcessingParameterNumber.Type.Double,
-                315,
-                False,
-                0,
-                360,
+                QgsProcessingParameterNumber.Double,
+                defaultValue=315,
+                minValue=0,
+                maxValue=360,
             )
         )
 
@@ -115,11 +114,10 @@ class HillshadeAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.ANGLE,
                 self.tr("Sun angle (0 to 90°)"),
-                QgsProcessingParameterNumber.Type.Double,
-                45,
-                False,
-                0,
-                90,
+                QgsProcessingParameterNumber.Double,
+                defaultValue=45,
+                minValue=0,
+                maxValue=90,
             )
         )
 
@@ -127,11 +125,8 @@ class HillshadeAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.LAT_Z,
                 self.tr("Lateral Z factor"),
-                QgsProcessingParameterNumber.Type.Double,
-                2,
-                False,
-                0,
-                100,
+                QgsProcessingParameterNumber.Double,
+                defaultValue=2,
             )
         )
 
@@ -139,11 +134,8 @@ class HillshadeAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.LON_Z,
                 self.tr("Longitudinal Z factor"),
-                QgsProcessingParameterNumber.Type.Double,
-                1,
-                False,
-                0,
-                100,
+                QgsProcessingParameterNumber.Double,
+                defaultValue=1,
             )
         )
         """
@@ -351,7 +343,8 @@ class HillshadeAlgorithm(QgsProcessingAlgorithm):
         ce.setMinimumValue(mean - sd * 2)
         ce.setMaximumValue(mean + sd * (1 if self.bidir else 2))
 
-        # to do QgsBrightnessContrastFilter
+        # TODO !!
+        # ☻ cb = QgsBrightnessContrastFilter
 
         rnd.setContrastEnhancement(ce)
 
